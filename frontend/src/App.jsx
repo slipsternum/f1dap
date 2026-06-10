@@ -173,11 +173,22 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
+      // 429 = too fast (anti-spam); 503 = demo paused via the kill switch.
+      // Handle both distinctly, reading the message from the {detail:{message}} body.
+      if (res.status === 429) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail?.message ?? "You're going too fast — please slow down and try again.");
+      }
+      if (res.status === 503) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.detail?.message ?? "This demo is temporarily paused. Check back soon.");
+      }
       if (!res.ok) {
         let message = "Prediction failed";
         try {
           const err = await res.json();
-          message = err.detail || message;
+          // detail may be a string or, from the rate-limit engine, an object.
+          message = (typeof err.detail === "string" ? err.detail : err.detail?.message) || message;
         } catch {
           const text = await res.text();
           if (text) message = text;

@@ -11,8 +11,8 @@ from pydantic import BaseModel
 try:
     from rate_limit import check_rate_limit
 except ImportError:
-    def check_rate_limit(ip: str) -> tuple[bool, int]:
-        return True, 0
+    def check_rate_limit(request, bucket: str = "predict") -> None:
+        return None
 
 app = FastAPI(title="F1 Qualifying Predictor API")
 
@@ -147,12 +147,7 @@ def predict(req: PredictRequest, request: Request):
     if model is None:
         raise HTTPException(status_code=503, detail="Model not loaded. Add model.pkl to backend/")
 
-    forwarded_for = request.headers.get("x-forwarded-for")
-    client_ip = forwarded_for.split(",")[0].strip() if forwarded_for else (request.client.host if request.client else "unknown")
-
-    allowed, current_count = check_rate_limit(client_ip)
-    if not allowed:
-        raise HTTPException(status_code=429, detail=f"Rate limit exceeded. Try again in a minute. ({current_count} requests seen)")
+    check_rate_limit(request, "predict")
 
     input_data = pd.DataFrame([{
         "n_fp_laps": req.n_fp_laps,
