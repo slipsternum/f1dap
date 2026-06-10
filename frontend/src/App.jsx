@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 
+const API_BASE = (import.meta.env.VITE_API_BASE ?? "http://localhost:7860").replace(/\/$/, "");
+
 const FEATURES = [
   { key: "n_fp_laps", label: "Total FP Laps", min: 0, max: 100, step: 1, default: 40, unit: "laps", hint: "Total laps across all free practice sessions" },
   { key: "n_fp_sessions_participated", label: "FP Sessions", min: 0, max: 3, step: 1, default: 3, unit: "sessions", hint: "Number of FP sessions the driver participated in" },
@@ -166,14 +168,22 @@ export default function App() {
     pendingResult.current = null;
 
     try {
-      const res = await fetch("https://f1dap.onrender.com/predict", {
+      const res = await fetch(`${API_BASE}/predict`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Prediction failed");
+        let message = "Prediction failed";
+        try {
+          const err = await res.json();
+          message = err.detail || message;
+        } catch {
+          const text = await res.text();
+          if (text) message = text;
+        }
+
+        throw new Error(message);
       }
       const data = await res.json();
       pendingResult.current = { data };

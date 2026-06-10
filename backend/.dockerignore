@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+*.ipynb
+data_processed/
+logs/
+build/
+checkpoints/
+.git/
+.gitignore
+README.md

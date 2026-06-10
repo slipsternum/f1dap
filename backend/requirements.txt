@@ -1,8 +1,9 @@
 fastapi 
 uvicorn 
 joblib 
-lightgbm 
 pandas 
 numpy 
 scikit-learn 
 xgboost 
+huggingface_hub 
+upstash-redis 
